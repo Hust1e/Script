@@ -1,44 +1,33 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class BowControl : MonoBehaviour
 {
     public bool isFiring;
 
-    public ArrowController arrow;
-    public float arrowSpeed;
-    public float timeBtwAttack;
-    private float shotCounter;
+    [SerializeField] private ArrowController arrow;
+    [SerializeField] private float arrowSpeed;
+    [SerializeField] private float pullArrow;
+    [SerializeField] private Transform arrowPivot;
 
-    public bool test;
-
-    public Transform arrowPivot;
-
+    private bool isReady;
 
     void Update()
     {
-        testfunc();
         if (isFiring)
         {
-            shotCounter -= Time.deltaTime;
-            if(shotCounter < 0f)
-            {
-                shotCounter = timeBtwAttack;
-                ArrowController newArrow = Instantiate(arrow, arrowPivot.position, arrowPivot.rotation) as ArrowController;
-                newArrow._speed = arrowSpeed;
-            }
-        }
-        else
-        {
-            shotCounter = 0f;
+            StartCoroutine(PullBow());
         }
     }
-    private void testfunc()
+    private IEnumerator PullBow()
     {
-        if (!test) return;
+        yield return new WaitForSeconds(pullArrow);
+        isReady = true;
+        if (Input.GetMouseButtonUp(1) && isReady)
         {
-            Debug.Log(test);
+            ArrowController newArrow = Instantiate(arrow, arrowPivot.position, arrowPivot.rotation) as ArrowController;
+            newArrow._speed = arrowSpeed;
+            isReady = false;
         }
     }
 }

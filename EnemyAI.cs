@@ -1,17 +1,14 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.AI;
 
 public class EnemyAI : MonoBehaviour
 {
-    public NavMeshAgent agent;
+    [SerializeField] private NavMeshAgent agent;
+    [SerializeField] private Transform player;
+    [SerializeField] private  LayerMask whatIsGround, whatIsPlayer;
 
-    public Transform player;
-
-    public LayerMask whatIsGround, whatIsPlayer;
-
-    public int health = 100;
+    private HealthController healthControl;
 
     //Patrol
     public Vector3 walkPoint;
@@ -27,9 +24,11 @@ public class EnemyAI : MonoBehaviour
     public float sightRange, attackRange;
     public bool playerInSightRange, playerInAttackRange;
 
+    public bool playerAttackMe;
+
     private void Awake()
     {
-        player = GameObject.Find("Archer").transform;
+        player = GameObject.Find("Player").transform;
         agent = GetComponent<NavMeshAgent>();
     }
     private void Update()
@@ -38,15 +37,20 @@ public class EnemyAI : MonoBehaviour
         playerInSightRange = Physics.CheckSphere(transform.position, sightRange, whatIsPlayer);
         playerInAttackRange = Physics.CheckSphere(transform.position, attackRange, whatIsPlayer);
 
-        if(!playerInSightRange && !playerInAttackRange) { Patroling(); }
-        if (playerInSightRange && !playerInAttackRange) { ChasePlayer(); }
-        if (playerInSightRange && playerInAttackRange) { AttackPlayer(); }
+        if(!playerInSightRange && playerAttackMe) 
+        {
+            playerAttackMe = true;
+            ChasePlayer(); 
+        }
+
+        if(playerInSightRange && !playerInAttackRange) { ChasePlayer(); }
+        if(playerInSightRange && playerInAttackRange) { AttackPlayer(); }
+        if (!playerInSightRange && !playerInAttackRange && !playerAttackMe) { Patroling(); }
     }
     private void Patroling()
     {
         if (!walkPointSet) 
         {
-            Debug.Log("!walkPoint unset");
             SearchWalkPoint();
         }
         if (walkPointSet)
@@ -59,7 +63,6 @@ public class EnemyAI : MonoBehaviour
             if(distanceToWalkPoint.magnitude < 1f)
             {
                 walkPointSet = false;
-                Debug.Log("Goal!");
             }
         }
     }
@@ -74,23 +77,16 @@ public class EnemyAI : MonoBehaviour
         if (Physics.Raycast(walkPoint, -transform.up, 2f, whatIsGround))
         {
             walkPointSet = true;
-            Debug.Log("walk Point set ");
-        }
-        else
-        {
-            Debug.Log("nothing :(");
         }
     }
-    private void ChasePlayer()
+    public void ChasePlayer()
     {
         agent.SetDestination(player.position);
         transform.LookAt(player);
     }
     private void AttackPlayer()
     {
-        //make sure enemy doesen`t move
         agent.SetDestination(transform.position);
-
         transform.LookAt(player);
 
         if (!alreadyAttacked)
@@ -107,19 +103,6 @@ public class EnemyAI : MonoBehaviour
     private void ResetAttack()
     {
         alreadyAttacked = false;
-    }
-    private void TakeDamage(int damage)
-    {
-        health -= damage;
-
-        if(health < 0)
-        {
-            Invoke(nameof(DestroyEnemy), 0.5f);
-        }
-    }
-    private void DestroyEnemy()
-    {
-        Destroy(gameObject);
     }
     private void OnDrawGizmosSelected()
     {

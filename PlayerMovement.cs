@@ -8,13 +8,15 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] LayerMask _aimLayerMask;
 
     Animator _animator;
-    BowControl bowControl;
+    BowControl _bowControl;
+
+    private bool _rightClick = false;
 
 
     private void Awake()
     {
         _animator = GetComponent<Animator>();
-        bowControl = GetComponent<BowControl>();
+        _bowControl = GetComponent<BowControl>();
     }
     void Update()
     {
@@ -40,14 +42,15 @@ public class PlayerMovement : MonoBehaviour
 
         if (Input.GetMouseButton(1))
         {
-            _animator.SetBool("Aiming", true);
-            bowControl.isFiring = true;
+            _rightClick = true;
+            _bowControl.isFiring = true;
         }
-        else
+        if(Input.GetMouseButtonUp(1))
         {
-            _animator.SetBool("Aiming", false);
-            bowControl.isFiring = false;
+            _rightClick = false;
+            _bowControl.isFiring = false;
         }
+        _animator.SetBool("Aiming", _rightClick);
     }
     private void AimTowardMouse()
     {
